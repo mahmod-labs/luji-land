@@ -17,6 +17,17 @@ services:
       timeout: 3s
       retries: 10
 
+  directory:
+    build: ./services/directory
+    environment:
+      DIRECTORY_DATABASE_URL: postgresql://directory:directory@directory-db:5432/directory
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      directory-db:
+        condition: service_healthy
+
   care-db:
     image: postgres:17
     environment:

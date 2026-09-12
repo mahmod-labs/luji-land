@@ -18,10 +18,10 @@ Slices 4–6 add the outbox and everything downstream of it.
 **Verify:** `make up` → `docker compose ps` shows directory-db, care-db, kafka all `healthy`
 
 ### 2. Directory service: classrooms, children, staff (own DB)
-- [ ] NestJS on Fastify, port 3001, config validated at startup (rule 6)
-- [ ] Prisma schema + migration: classrooms, children, staff in `directory-db`
-- [ ] Client-generated ids (id supplied by caller) on create — decided here, expensive to retrofit
-- [ ] CRUD endpoints for the three resources
+- [x] NestJS on Fastify, port 3001, config validated at startup (rule 6)
+- [x] Prisma schema + migration: classrooms, children, staff in `directory-db`
+- [x] Client-generated ids (id supplied by caller) on create — decided here, expensive to retrofit
+- [x] CRUD endpoints for the three resources
 **Touches:** services/directory, contracts/
 **Verify:** `curl -X POST :3001/children -d '{"id":"<uuid>",...}'` → 201; `curl :3001/children/<uuid>` → 200 with the record
 
