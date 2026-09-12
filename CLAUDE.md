@@ -12,6 +12,13 @@ Nothing is built yet.
 - **Milestones** — the 8 phases.
 - **Issues** — the one thing being built now. Its body is that service's PRD.
 
+## Never touch GitHub unless asked
+
+**No push, no force-push, no branch or tag delete, no issue, milestone, label,
+project, release, or settings change — unless I ask for that specific thing in
+that message.** Committing locally is fine and needs no permission. Anything
+that leaves this machine does. When a task seems to need it, stop and ask.
+
 ## Working agreement
 
 - One open issue at a time. Two means the second hasn't started.
