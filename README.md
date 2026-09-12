@@ -93,47 +93,31 @@ Deliberately excluded options are in [EXTRAS.md](EXTRAS.md).
 
 ## Phases
 
-Each one works before the next starts.
-
-| Build | Why here |
-| :--- | :--- |
-| **1. Directory + Care records + Kafka** | Hardest part first: two services surviving each other's downtime. Brings up the broker, because every pattern here needs it. |
-| **2. Gateway + Redis** | One entrance, login end to end |
-| **3. Notifications + jobs** | Messaging as real infrastructure |
-| **4. Enrollment** | A saga that can fail halfway |
-| **5. Reports** | The first thing needing full history and replay |
-| **6. Media** | Uploads and background processing |
-| **7. Split Directory** | Big enough by now to be worth strangling — goes last |
-
----
-
-## Patterns
-
-One pattern per row, one problem forcing it. Full story and acceptance
-criteria get written when work on it starts. This table is not a backlog.
+Seven phases, in this order. Each is a working system before the next
+starts — build the steps top to bottom, and the phase is finished when
+its **Done when** holds. Patterns are listed with the phase that forces
+them; the full story is written when work on that phase starts.
 
 ### 1. Directory + Care records + Kafka
 
-| Pattern | Problem it solves |
-| :--- | :--- |
-| Event-driven communication | Directory publishes, doesn't call Care records directly |
-| Local replica / data duplication | Directory is down at drop-off; check-ins still work |
-| Catch-up consumer | Care records was off all night, missed enrollments |
-| Idempotent consumer | The broker redelivers an already-handled message |
-| Idempotency key | A double-tapped check-in on a stalled network |
-| Eventual consistency, explicit | The replica lags the write by a couple seconds |
-| DB-side constraint / optimistic concurrency | A room must never exceed capacity, even under a race |
-| Transactional outbox | A write commits but its event is lost on crash |
-| Event ordering by occurrence time | "Withdrawn" arrives before "enrolled" |
-
-Client-generated ids and records carrying the time they happened are decided
-here — they are expensive to retrofit and are what offline sync will need.
+Hardest part first: two services surviving each other's downtime. Brings up the
+broker, because every pattern below needs it. Full PRD:
+[#1](https://github.com/mahmod-labs/luji-land/issues/1).
 
 ### 2. Gateway + Redis
 
+One entrance, login end to end.
+
+1. Directory issues signed JWTs and publishes its public key.
+2. Gateway (NestJS): verify, rate limit, forward. No response composing.
+3. Every service verifies tokens locally — nobody calls Directory to authorize.
+4. Redis cache-aside on Directory reads, invalidated on write.
+5. Revocation list in Redis, fed by a Kafka event.
+6. Token bucket per client in the gateway.
+
 | Pattern | Problem it solves |
 | :--- | :--- |
-| API gateway | Auth, rate limits, routing in one place, not six |
+| API gateway | Auth, rate limits, routing in one place, not seven |
 | Stateless token verification | Every service authorizes without calling Directory |
 | Permission change by event | A revoked access must stop working immediately |
 | Cache-aside + explicit invalidation | A list goes stale right after a write |
@@ -141,7 +125,18 @@ here — they are expensive to retrofit and are what offline sync will need.
 | Fail-open degradation | Redis goes down; nothing may error out |
 | Token-bucket rate limiting | One client can't starve everyone else |
 
+**Done when:** Redis is stopped and requests still succeed; a revoked token
+fails on its *next* request, not after a cache expires.
+
 ### 3. Notifications + jobs
+
+Messaging as real infrastructure.
+
+1. Notifications consumes domain events, decides what's worth sending.
+2. Sends go through a BullMQ queue on Redis — never inline in the consumer.
+3. Retry with backoff, circuit breaker around the email provider.
+4. Failed messages land on the topic's `.dlq` twin.
+5. Separate worker pools so email can't monopolise the service.
 
 | Pattern | Problem it solves |
 | :--- | :--- |
@@ -151,7 +146,17 @@ here — they are expensive to retrofit and are what offline sync will need.
 | Consumer group rebalance | A worker dies holding a job |
 | Bulkhead | A flood of email jobs must not starve check-ins |
 
+**Done when:** a provider that returns 500 for an hour loses nothing, and
+check-ins are unaffected throughout.
+
 ### 4. Enrollment
+
+A saga that can fail halfway.
+
+1. A saga table in Directory: one row per enrollment, its current step.
+2. Each step has a compensating action written at the same time as the step.
+3. A sweeper job abandons enrollments stuck waiting too long.
+4. A `rebuild-replica` command that re-reads source of truth from the log.
 
 | Pattern | Problem it solves |
 | :--- | :--- |
@@ -160,7 +165,16 @@ here — they are expensive to retrofit and are what offline sync will need.
 | Timeout + abandon | A consent form that's never signed |
 | Replica rebuild from source | A copy has been wrong for weeks |
 
+**Done when:** killing the service mid-saga leaves no half-created child —
+compensations run on restart.
+
 ### 5. Reports
+
+The first thing needing full history and replay.
+
+1. Reports consumes from offset 0 and builds a read model — no writes of its own.
+2. Events are stored, not just their result.
+3. A correction is a new event; nothing is ever updated in place.
 
 | Pattern | Problem it solves |
 | :--- | :--- |
@@ -169,7 +183,16 @@ here — they are expensive to retrofit and are what offline sync will need.
 | Event sourcing | State alone can't answer "was this corrected later?" |
 | Corrections, not deletes | A recorded time was wrong yesterday |
 
+**Done when:** the Reports database is dropped, replayed from Kafka, and the
+totals match what they were.
+
 ### 6. Media
+
+Uploads and background processing.
+
+1. Media hands out presigned S3 URLs; the file goes browser → MinIO directly.
+2. The event carries the object key, never the bytes.
+3. An arq job transcodes after the upload request has already returned.
 
 | Pattern | Problem it solves |
 | :--- | :--- |
@@ -177,11 +200,22 @@ here — they are expensive to retrofit and are what offline sync will need.
 | Claim check | Big payloads don't belong in messages |
 | In-service deferred work | Transcoding takes too long for the upload request to wait on |
 
-### 7. Splitting Directory
+**Done when:** a 400 MB video uploads without the service's memory moving.
+
+### 7. Split Directory
+
+Big enough by now to be worth strangling — goes last.
+
+1. Carve Billing out of Directory into its own service and database.
+2. Gateway routes old paths to whichever side owns them, one at a time.
+3. Old routes keep working the entire way through.
 
 | Pattern | Problem it solves |
 | :--- | :--- |
 | Strangler fig | Directory outgrew itself — carve it apart with no cutover |
+
+**Done when:** Billing is a separate service and no request ever 404'd during
+the move.
 
 ---
 
