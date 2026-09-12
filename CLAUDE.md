@@ -23,7 +23,7 @@ phase is how they drift. The issue never overrides README § Architecture: the
 
 ## The workflow
 
-Each phase is run by `/phase <n>`, which orchestrates four agents against the
+Each phase is run by `/luji-land-phase <n>`, which orchestrates four agents against the
 issue body and `plan.md`:
 
 - **luji-land-phase-planner** — issue → slices in `plan.md`, each with a Verify
