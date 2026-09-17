@@ -11,16 +11,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error('DIRECTORY_DATABASE_URL is required');
   }
 
+  // PORT keeps a default: it's the service's own listen port, not a dependency
+  // address, and 3001 is the fixed convention across compose and the README.
   const port = Number(env.PORT ?? 3001);
   if (!Number.isInteger(port) || port <= 0) {
     throw new Error(`PORT must be a positive integer, got: ${env.PORT}`);
   }
 
-  // A broker address has a sane local default (like PORT), so it doesn't gate
-  // boot the way the database URL does — the publisher retries a down broker
-  // rather than the process refusing to start.
-  const kafkaBrokers = (env.KAFKA_BROKERS ?? 'localhost:9092')
-    .split(',')
+  // Rule 6: a missing broker address refuses to boot, no default. (This is the
+  // setting's presence, not the broker's reachability — the OutboxPublisher
+  // still reconnects to a down broker at runtime.)
+  if (!env.KAFKA_BROKERS) {
+    throw new Error('KAFKA_BROKERS is required');
+  }
+  const kafkaBrokers = env.KAFKA_BROKERS.split(',')
     .map((b) => b.trim())
     .filter(Boolean);
 

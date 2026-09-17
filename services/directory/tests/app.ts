@@ -33,6 +33,9 @@ export async function startTestApp(options?: {
   }
 
   process.env.DIRECTORY_DATABASE_URL = databaseUrl;
+  // Required at boot (rule 6). No Kafka in this suite — the OutboxPublisher just
+  // retries an unreachable broker, which is the resilience we want to hold.
+  process.env.KAFKA_BROKERS ??= 'localhost:9092';
   // Reused across app instances pointed at the same DB (e.g. a "broker down
   // then up" sequence) — set fresh before each create(), since the outbox
   // publisher reads it once, at construction.
