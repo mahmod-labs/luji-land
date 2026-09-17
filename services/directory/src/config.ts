@@ -2,6 +2,7 @@
 export type Config = {
   port: number;
   databaseUrl: string;
+  kafkaBrokers: string[];
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -15,5 +16,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error(`PORT must be a positive integer, got: ${env.PORT}`);
   }
 
-  return { port, databaseUrl };
+  // A broker address has a sane local default (like PORT), so it doesn't gate
+  // boot the way the database URL does — the publisher retries a down broker
+  // rather than the process refusing to start.
+  const kafkaBrokers = (env.KAFKA_BROKERS ?? 'localhost:9092')
+    .split(',')
+    .map((b) => b.trim())
+    .filter(Boolean);
+
+  return { port, databaseUrl, kafkaBrokers };
 }

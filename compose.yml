@@ -22,10 +22,13 @@ services:
     environment:
       DIRECTORY_DATABASE_URL: postgresql://directory:directory@directory-db:5432/directory
       PORT: 3001
+      KAFKA_BROKERS: kafka:9092
     ports:
       - "3001:3001"
     depends_on:
       directory-db:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   care-db:

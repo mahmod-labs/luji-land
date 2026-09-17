@@ -33,9 +33,9 @@ Slices 4–6 add the outbox and everything downstream of it.
 **Verify:** fire the 20th and 21st enrollment into a capacity-20 room concurrently → exactly one 201, the other 409; `SELECT count(*)` = 20
 
 ### 4. Transactional outbox + publisher loop
-- [ ] `outbox` table in directory-db; enrollment/child writes append an event row in the same transaction
-- [ ] Events carry an event id and an occurrence time (occurred-at decided here — offline sync needs it)
-- [ ] Publisher loop drains outbox → `directory.child.*` topics, marks rows sent
+- [x] `outbox` table in directory-db; enrollment/child writes append an event row in the same transaction
+- [x] Events carry an event id and an occurrence time (occurred-at decided here — offline sync needs it)
+- [x] Publisher loop drains outbox → `directory.child.*` topics, marks rows sent
 **Touches:** services/directory, contracts/
 **Verify:** enrol a child, then `kafka-console-consumer --topic directory.child.enrolled --from-beginning` → the event appears with its id and occurrence time
 

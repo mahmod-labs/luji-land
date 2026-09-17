@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "directory.child.enrolled.v1",
+  "title": "directory.child.enrolled",
+  "description": "A child was placed into a classroom. Published from Directory's transactional outbox. eventId is the consumer's idempotency key; occurredAt is the authoritative occurrence time (offline sync and ordering depend on it, not on broker arrival).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "occurredAt", "enrollmentId", "childId", "classroomId"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "enrollmentId": { "type": "string" },
+    "childId": { "type": "string" },
+    "classroomId": { "type": "string" }
+  }
+}

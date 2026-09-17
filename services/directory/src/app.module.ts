@@ -4,6 +4,7 @@ import { ChildrenModule } from './modules/children/children.module';
 import { ClassroomsModule } from './modules/classrooms/classrooms.module';
 import { StaffModule } from './modules/staff/staff.module';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
+import { MessagingModule } from './messaging/outbox';
 
 @Global()
 @Module({
@@ -19,6 +20,7 @@ class PrismaModule {}
     ClassroomsModule,
     StaffModule,
     EnrollmentsModule,
+    MessagingModule,
   ],
 })
 export class AppModule {}

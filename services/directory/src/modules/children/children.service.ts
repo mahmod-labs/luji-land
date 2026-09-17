@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, type Child } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
+import { appendOutbox } from '../../messaging/outbox';
 import { CreateChildDto } from './dto/create-child.dto';
 
 @Injectable()
@@ -13,7 +14,21 @@ export class ChildrenService {
 
   async create(dto: CreateChildDto): Promise<Child> {
     try {
-      return await this.prisma.child.create({ data: dto });
+      // Child row and its event commit together (transactional outbox).
+      return await this.prisma.$transaction(async (tx) => {
+        const child = await tx.child.create({ data: dto });
+        await appendOutbox(tx, {
+          topic: 'directory.child.created',
+          key: child.id,
+          occurredAt: child.createdAt,
+          payload: {
+            childId: child.id,
+            firstName: child.firstName,
+            lastName: child.lastName,
+          },
+        });
+        return child;
+      });
     } catch (err) {
       // P2002 = unique violation: the client-supplied id already exists.
       if (

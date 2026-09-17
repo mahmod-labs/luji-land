@@ -49,3 +49,20 @@ model Enrollment {
   child     Child     @relation(fields: [childId], references: [id])
   classroom Classroom @relation(fields: [classroomId], references: [id])
 }
+
+// Transactional outbox (rule: a write must never commit without its event). A
+// domain write and its event row are inserted in ONE transaction, so a rollback
+// (e.g. the capacity trigger) leaves no event. The publisher loop drains unsent
+// rows to Kafka and stamps sentAt only after the broker acks — at-least-once,
+// since a crash between ack and stamp re-sends (the consumer is idempotent).
+// occurredAt is the authoritative occurrence time the event carries.
+model OutboxEvent {
+  id         String    @id
+  topic      String
+  key        String
+  payload    Json
+  occurredAt DateTime  @default(now())
+  sentAt     DateTime?
+
+  @@index([sentAt, occurredAt])
+}

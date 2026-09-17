@@ -1,6 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Prisma, type Enrollment } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
+import { appendOutbox } from '../../messaging/outbox';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 
 @Injectable()
@@ -9,7 +10,23 @@ export class EnrollmentsService {
 
   async create(dto: CreateEnrollmentDto): Promise<Enrollment> {
     try {
-      return await this.prisma.enrollment.create({ data: dto });
+      // The enrollment row and its event commit in one transaction: if the
+      // capacity trigger rejects the insert, the transaction rolls back and NO
+      // outbox row exists. A write never commits without its event.
+      return await this.prisma.$transaction(async (tx) => {
+        const enrollment = await tx.enrollment.create({ data: dto });
+        await appendOutbox(tx, {
+          topic: 'directory.child.enrolled',
+          key: enrollment.childId,
+          occurredAt: enrollment.createdAt,
+          payload: {
+            enrollmentId: enrollment.id,
+            childId: enrollment.childId,
+            classroomId: enrollment.classroomId,
+          },
+        });
+        return enrollment;
+      });
     } catch (err) {
       // The capacity check lives in a DB trigger (migration 0002), so a full
       // room surfaces here as a raised exception, not something the service

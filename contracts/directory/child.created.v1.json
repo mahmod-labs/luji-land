@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "directory.child.created.v1",
+  "title": "directory.child.created",
+  "description": "A child record was created in Directory. Carries the child's identity so a downstream replica knows who the child is without calling Directory. eventId is the idempotency key; occurredAt is the authoritative occurrence time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["eventId", "occurredAt", "childId", "firstName", "lastName"],
+  "properties": {
+    "eventId": { "type": "string", "format": "uuid" },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "childId": { "type": "string" },
+    "firstName": { "type": "string" },
+    "lastName": { "type": "string" }
+  }
+}
