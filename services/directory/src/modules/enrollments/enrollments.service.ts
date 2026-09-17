@@ -31,15 +31,12 @@ export class EnrollmentsService {
   }
 }
 
-// The trigger raises SQLSTATE 23514 (check_violation). Prisma surfaces a
-// trigger RAISE not as a mapped known-code error but as a raw connector error
-// whose message carries the Postgres code and text, so match on those.
+// Prisma surfaces the capacity trigger's RAISE not as a mapped known-code error
+// but as a raw connector error whose message carries the exception text. Match
+// ONLY that text — SQLSTATE 23514 is the generic check_violation code, so any
+// future CHECK constraint would share it and get mis-mapped to a false 409.
+// The literal comes from the trigger in 0002_*/migration.sql: 'is at capacity'.
 function isCapacityRejection(err: unknown): boolean {
-  const message =
-    err instanceof Error
-      ? err.message
-      : typeof err === 'string'
-        ? err
-        : '';
-  return message.includes('23514') || message.includes('at capacity');
+  const message = err instanceof Error ? err.message : '';
+  return message.includes('is at capacity');
 }
