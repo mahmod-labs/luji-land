@@ -3,6 +3,7 @@ import { PrismaService } from './prisma.service';
 import { ChildrenModule } from './modules/children/children.module';
 import { ClassroomsModule } from './modules/classrooms/classrooms.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { EnrollmentsModule } from './modules/enrollments/enrollments.module';
 
 @Global()
 @Module({
@@ -12,6 +13,12 @@ import { StaffModule } from './modules/staff/staff.module';
 class PrismaModule {}
 
 @Module({
-  imports: [PrismaModule, ChildrenModule, ClassroomsModule, StaffModule],
+  imports: [
+    PrismaModule,
+    ChildrenModule,
+    ClassroomsModule,
+    StaffModule,
+    EnrollmentsModule,
+  ],
 })
 export class AppModule {}

@@ -12,17 +12,19 @@ datasource db {
 // them, and offline clients must mint their own). createdAt is recorded now so
 // those same events can carry an occurrence time without a retrofit.
 model Classroom {
-  id        String   @id
-  name      String
-  capacity  Int
-  createdAt DateTime @default(now())
+  id          String       @id
+  name        String
+  capacity    Int
+  createdAt   DateTime     @default(now())
+  enrollments Enrollment[]
 }
 
 model Child {
-  id        String   @id
-  firstName String
-  lastName  String
-  createdAt DateTime @default(now())
+  id         String      @id
+  firstName  String
+  lastName   String
+  createdAt  DateTime    @default(now())
+  enrollment Enrollment?
 }
 
 model Staff {
@@ -31,4 +33,19 @@ model Staff {
   lastName  String
   role      String
   createdAt DateTime @default(now())
+}
+
+// A child's placement in one classroom. Capacity is NOT enforced here in
+// Prisma or service code — a BEFORE INSERT trigger (migration
+// 0002_add_enrollment_capacity_constraint) locks the classroom row and counts,
+// so two concurrent enrollments at the limit can't both win (rule: DB-side
+// constraint). A child holds at most one placement: unique childId.
+model Enrollment {
+  id          String   @id
+  childId     String   @unique
+  classroomId String
+  createdAt   DateTime @default(now())
+
+  child     Child     @relation(fields: [childId], references: [id])
+  classroom Classroom @relation(fields: [classroomId], references: [id])
 }

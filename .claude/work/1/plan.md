@@ -26,9 +26,9 @@ Slices 4–6 add the outbox and everything downstream of it.
 **Verify:** `curl -X POST :3001/children -d '{"id":"<uuid>",...}'` → 201; `curl :3001/children/<uuid>` → 200 with the record
 
 ### 3. Room capacity as a DB constraint
-- [ ] Enrollment writes child→classroom; capacity enforced in the database, not service code
-- [ ] Constraint/trigger rejects the over-limit write atomically (DB-side, race-safe)
-- [ ] Service maps the DB rejection to 409
+- [x] Enrollment writes child→classroom; capacity enforced in the database, not service code
+- [x] Constraint/trigger rejects the over-limit write atomically (DB-side, race-safe)
+- [x] Service maps the DB rejection to 409
 **Touches:** services/directory
 **Verify:** fire the 20th and 21st enrollment into a capacity-20 room concurrently → exactly one 201, the other 409; `SELECT count(*)` = 20
 
