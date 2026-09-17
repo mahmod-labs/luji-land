@@ -47,6 +47,21 @@ services:
       timeout: 3s
       retries: 10
 
+  care-records:
+    build: ./services/care-records
+    environment:
+      # psycopg URL: Alembic (sync) and the app engine (async) both use it.
+      CARE_DATABASE_URL: postgresql+psycopg://care:care@care-db:5432/care
+      CARE_PORT: 3002
+      CARE_KAFKA_BROKERS: kafka:9092
+    ports:
+      - "3002:3002"
+    depends_on:
+      care-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
   kafka:
     image: apache/kafka:3.9.0
     ports:

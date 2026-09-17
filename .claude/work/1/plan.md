@@ -40,9 +40,9 @@ Slices 4–6 add the outbox and everything downstream of it.
 **Verify:** enrol a child, then `kafka-console-consumer --topic directory.child.enrolled --from-beginning` → the event appears with its id and occurrence time
 
 ### 5. Care records: consume into a local replica (catch-up + idempotent)
-- [ ] FastAPI, port 3002, Alembic migration for a local `children` replica table in care-db
-- [ ] Consumer reads `directory.child.*`, upserts the replica, ordered by occurrence time (withdrawn-before-enrolled safe)
-- [ ] Idempotent on event id — a redelivered event is a no-op
+- [x] FastAPI, port 3002, Alembic migration for a local `children` replica table in care-db
+- [x] Consumer reads `directory.child.*`, upserts the replica, ordered by occurrence time (withdrawn-before-enrolled safe)
+- [x] Idempotent on event id — a redelivered event is a no-op
 **Touches:** services/care-records, contracts/
 **Verify:** stop care-records, enrol a child, start care-records → `SELECT` on care-db replica shows the child within seconds, with no Directory call
 
