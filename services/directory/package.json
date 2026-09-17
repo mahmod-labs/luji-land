@@ -23,10 +23,13 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
+    "@testcontainers/kafka": "^12.1.0",
     "@testcontainers/postgresql": "^12.1.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.0",
     "@types/supertest": "^7.2.1",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "jest": "^30.5.1",
     "prisma": "^6.3.0",
     "supertest": "^7.2.2",
