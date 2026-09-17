@@ -35,9 +35,7 @@ _TO_COLUMN = {
 
 async def _handle(raw: bytes) -> None:
     event = json.loads(raw)
-    fields = {
-        _TO_COLUMN[k]: event[k] for k in _FIELD_KEYS if event.get(k) is not None
-    }
+    fields = {_TO_COLUMN[k]: event[k] for k in _FIELD_KEYS if event.get(k) is not None}
     async with Session() as session:
         applied = await apply_child_event(
             session,
@@ -64,7 +62,7 @@ async def run_consumer(stop: asyncio.Event) -> None:
     try:
         while not stop.is_set():
             batch = await consumer.getmany(timeout_ms=1000, max_records=100)
-            for _tp, messages in batch.items():
+            for messages in batch.values():
                 for message in messages:
                     await _handle(message.value)
             if batch:

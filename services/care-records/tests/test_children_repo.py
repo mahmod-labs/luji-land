@@ -15,7 +15,7 @@ from sqlalchemy import text
 from app.db.repositories.children import apply_child_event
 from app.db.session import Session
 
-UTC = datetime.timezone.utc
+UTC = datetime.UTC
 
 
 @pytest.mark.asyncio
@@ -24,11 +24,19 @@ async def test_redelivered_event_id_is_noop() -> None:
     now = datetime.datetime.now(UTC)
     async with Session() as s:
         first = await apply_child_event(
-            s, event_id=eid, occurred_at=now, child_id=cid, fields={"first_name": "Grace"}
+            s,
+            event_id=eid,
+            occurred_at=now,
+            child_id=cid,
+            fields={"first_name": "Grace"},
         )
     async with Session() as s:
         again = await apply_child_event(
-            s, event_id=eid, occurred_at=now, child_id=cid, fields={"first_name": "Grace"}
+            s,
+            event_id=eid,
+            occurred_at=now,
+            child_id=cid,
+            fields={"first_name": "Grace"},
         )
     async with Session() as s:
         rows = (
@@ -49,7 +57,11 @@ async def test_older_event_does_not_clobber_newer_state() -> None:
     t2 = datetime.datetime(2026, 1, 2, tzinfo=UTC)
     async with Session() as s:  # newer classroom first
         await apply_child_event(
-            s, event_id="ord-new", occurred_at=t2, child_id=cid, fields={"classroom_id": "NEW"}
+            s,
+            event_id="ord-new",
+            occurred_at=t2,
+            child_id=cid,
+            fields={"classroom_id": "NEW"},
         )
     async with Session() as s:  # older event arrives late
         await apply_child_event(
@@ -62,7 +74,9 @@ async def test_older_event_does_not_clobber_newer_state() -> None:
     async with Session() as s:
         classroom, first_name = (
             await s.execute(
-                text("select classroom_id, first_name from children_replica where child_id=:c"),
+                text(
+                    "select classroom_id, first_name from children_replica where child_id=:c"
+                ),
                 {"c": cid},
             )
         ).one()

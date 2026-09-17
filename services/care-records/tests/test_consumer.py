@@ -11,7 +11,7 @@ the repo-level unit test stayed green.
 import asyncio
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from aiokafka import AIOKafkaProducer
@@ -20,8 +20,6 @@ from sqlalchemy import text
 from app.config import load_config
 from app.db.session import Session
 from app.messaging.consumers.child_events import run_consumer
-
-UTC = timezone.utc
 
 
 async def _produce(topic: str, event: dict) -> None:
