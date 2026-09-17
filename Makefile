@@ -14,3 +14,4 @@ down:
 test:
 	docker compose build directory
 	docker compose run --rm --no-deps directory node dist/config.spec.js
+	cd services/care-records && uv run pytest tests/
